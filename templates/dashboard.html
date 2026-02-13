@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moltenbot Control Center</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>MOLTENBOT <span style="font-weight: 300; font-size: 1.5rem; color: var(--text-secondary);">// CONTROL
+                    CENTER</span></h1>
+            <div>
+                <a href="/admin" style="color: var(--accent-blue); text-decoration: none; font-weight: 600;">ADMIN
+                    CONSOLE &rarr;</a>
+            </div>
+        </header>
+
+        <main>
+            <div id="bot-grid" class="grid">
+                <!-- Bot cards injected here by JS -->
+                <div class="card"
+                    style="display: flex; align-items: center; justify-content: center; height: 200px; color: var(--text-secondary);">
+                    Loading Fleet Telemetry...
+                </div>
+            </div>
+
+            <section class="feed-section">
+                <h2>LATEST EXECUTIONS</h2>
+                <div class="card" style="padding: 0;">
+                    <table id="execution-table">
+                        <thead>
+                            <tr>
+                                <th>BOT</th>
+                                <th>TASK</th>
+                                <th>TIME</th>
+                                <th>STATUS</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Rows injected here -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        async function fetchState() {
+            try {
+                // Fetch Bots
+                const botsRes = await fetch('/api/bots/');
+                const bots = await botsRes.json();
+                renderBots(bots);
+
+                // Fetch Executions
+                const execsRes = await fetch('/api/executions/');
+                const execs = await execsRes.json();
+                renderExecutions(execs);
+            } catch (e) {
+                console.error("Telemetry Link Failure:", e);
+            }
+        }
+
+        function getTempColor(temp) {
+            if (temp < 500) return 'var(--accent-blue)';
+            if (temp < 800) return 'var(--accent-orange)';
+            return 'var(--accent-red)';
+        }
+
+        function renderBots(bots) {
+            const grid = document.getElementById('bot-grid');
+            if (bots.length === 0) {
+                grid.innerHTML = '<div class="card">No Active Bots Found</div>';
+                return;
+            }
+
+            grid.innerHTML = bots.map(bot => {
+                const isMeltdown = bot.status === 'MELTDOWN';
+                return `
+                    <div class="card ${isMeltdown ? 'meltdown-active' : ''}">
+                        <div class="card-header">
+                            <span class="bot-name">${bot.name}</span>
+                            <span class="status-badge status-${bot.status}">${bot.status}</span>
+                        </div>
+                        <div style="margin-top: 1rem;">
+                            <div style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.5rem;">CORE TEMPERATURE</div>
+                            <div class="bot-temp" style="color: ${getTempColor(bot.temperature)}">
+                                ${bot.temperature.toFixed(1)}°C
+                            </div>
+                            <div style="height: 4px; background: #30363d; margin-top: 0.5rem; border-radius: 2px; overflow: hidden;">
+                                <div style="width: ${Math.min(100, bot.temperature / 10)}%; height: 100%; background-color: ${getTempColor(bot.temperature)}; transition: width 0.5s ease;"></div>
+                            </div>
+                        </div>
+                        <div style="margin-top: 1rem; font-size: 0.8rem; color: var(--text-secondary);">
+                            v${bot.model_version} • Org: ${bot.organization}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderExecutions(data) {
+            const tbody = document.querySelector('#execution-table tbody');
+            const results = Array.isArray(data) ? data : data.results;
+
+            tbody.innerHTML = results.slice(0, 10).map(exec => `
+                <tr>
+                    <td style="font-weight: 600; color: var(--text-primary);">${exec.bot_name}</td>
+                    <td>${exec.task_name}</td>
+                    <td style="color: var(--text-secondary); font-size: 0.9em;">${new Date(exec.started_at).toLocaleTimeString()}</td>
+                    <td>
+                        <span style="color: ${exec.success ? 'var(--accent-blue)' : 'var(--accent-red)'}">
+                            ${exec.success ? 'SUCCESS' : 'FAILURE'}
+                        </span>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Poll every 2 seconds
+        setInterval(fetchState, 2000);
+        fetchState();
+    </script>
+</body>
+
+</html>
