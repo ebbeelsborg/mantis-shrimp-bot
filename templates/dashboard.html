@@ -11,8 +11,11 @@
 <body>
     <div class="container">
         <header>
-            <h1>MANTIS SHRIMP BOT <span style="font-weight: 300; font-size: 1.5rem; color: var(--text-secondary);">// CONTROL
-                    CENTER</span></h1>
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <img src="/static/logo.svg" alt="Mantis Shrimp" style="height: 44px; width: 90px;" />
+                <h1>MANTIS SHRIMP BOT <span style="font-weight: 300; font-size: 1.5rem; color: var(--text-secondary);">// CONTROL
+                        CENTER</span></h1>
+            </div>
             <div>
                 <a href="/admin" style="color: var(--accent-blue); text-decoration: none; font-weight: 600;">ADMIN
                     CONSOLE &rarr;</a>
@@ -82,7 +85,7 @@
             grid.innerHTML = bots.map(bot => {
                 const isMeltdown = bot.status === 'MELTDOWN';
                 return `
-                    <div class="card ${isMeltdown ? 'meltdown-active' : ''}">
+                    <a href="/bots/${bot.id}/" class="card ${isMeltdown ? 'meltdown-active' : ''}" style="text-decoration: none; color: inherit;">
                         <div class="card-header">
                             <span class="bot-name">${bot.name}</span>
                             <span class="status-badge status-${bot.status}">${bot.status}</span>
@@ -99,7 +102,7 @@
                         <div style="margin-top: 1rem; font-size: 0.8rem; color: var(--text-secondary);">
                             v${bot.model_version} • Org: ${bot.organization}
                         </div>
-                    </div>
+                    </a>
                 `;
             }).join('');
         }

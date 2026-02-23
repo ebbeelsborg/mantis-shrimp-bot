@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ bot.name }} — Mantis Shrimp Bot Control Center</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <img src="/static/logo.svg" alt="Mantis Shrimp" style="height: 44px; width: 90px;" />
+                <h1>MANTIS SHRIMP BOT <span style="font-weight: 300; font-size: 1.5rem; color: var(--text-secondary);">// CONTROL
+                        CENTER</span></h1>
+            </div>
+            <div>
+                <a href="/" style="color: var(--accent-blue); text-decoration: none; font-weight: 600;">&larr; DASHBOARD</a>
+                <span style="margin: 0 0.5rem;">|</span>
+                <a href="/admin" style="color: var(--accent-blue); text-decoration: none; font-weight: 600;">ADMIN CONSOLE &rarr;</a>
+            </div>
+        </header>
+
+        <main>
+            <div class="card {% if bot.status == 'MELTDOWN' %}meltdown-active{% endif %}" style="max-width: 500px;">
+                <div class="card-header">
+                    <span class="bot-name">{{ bot.name }}</span>
+                    <span class="status-badge status-{{ bot.status }}">{{ bot.status }}</span>
+                </div>
+                <div style="margin-top: 1rem;">
+                    <div style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.5rem;">CORE TEMPERATURE</div>
+                    <div class="bot-temp" style="color: {% if bot.temperature >= 800 %}var(--accent-red){% elif bot.temperature >= 500 %}var(--accent-orange){% else %}var(--accent-blue){% endif %}">
+                        {{ bot.temperature|floatformat:1 }}°C
+                    </div>
+                    <div style="height: 4px; background: #30363d; margin-top: 0.5rem; border-radius: 2px; overflow: hidden;">
+                        <div style="width: {% if bot.temperature >= 1000 %}100{% else %}{% widthratio bot.temperature 10 1 %}{% endif %}%; height: 100%; background-color: {% if bot.temperature >= 800 %}var(--accent-red){% elif bot.temperature >= 500 %}var(--accent-orange){% else %}var(--accent-blue){% endif %};"></div>
+                    </div>
+                </div>
+                <div style="margin-top: 1rem; font-size: 0.8rem; color: var(--text-secondary);">
+                    v{{ bot.model_version }} • Org: {{ bot.organization.name }}
+                </div>
+            </div>
+
+            <section class="feed-section" style="margin-top: 2rem;">
+                <h2>TASK STATISTICS</h2>
+                <div class="card" style="max-width: 500px;">
+                    <div style="display: flex; gap: 2rem; flex-wrap: wrap;">
+                        <div>
+                            <div style="font-size: 0.8rem; color: var(--text-secondary);">TOTAL TASKS</div>
+                            <div style="font-size: 1.5rem; font-weight: 700;">{{ total_tasks }}</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.8rem; color: var(--text-secondary);">SUCCESS RATE</div>
+                            <div style="font-size: 1.5rem; font-weight: 700; color: var(--accent-blue);">{{ success_rate }}%</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.8rem; color: var(--text-secondary);">SUCCESSFUL</div>
+                            <div style="font-size: 1.5rem; font-weight: 700;">{{ success_count }}</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="feed-section" style="margin-top: 2rem;">
+                <h2>COMPLETED TASKS</h2>
+                <div class="card" style="padding: 0;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>TASK</th>
+                                <th>TIME</th>
+                                <th>STATUS</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for exec in executions %}
+                            <tr>
+                                <td>{{ exec.task_name }}</td>
+                                <td style="color: var(--text-secondary); font-size: 0.9em;">{{ exec.started_at|date:"M d, Y H:i" }}</td>
+                                <td>
+                                    <span style="color: {% if exec.success %}var(--accent-blue){% else %}var(--accent-red){% endif %}">
+                                        {% if exec.success %}SUCCESS{% else %}FAILURE{% endif %}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="3" style="padding: 2rem; color: var(--text-secondary);">No completed tasks yet.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+</body>
+
+</html>
