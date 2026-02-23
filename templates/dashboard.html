@@ -56,13 +56,15 @@
         async function fetchState() {
             try {
                 // Fetch Bots
-                const botsRes = await fetch('/api/bots/');
-                const bots = await botsRes.json();
+                const botsRes = await fetch('/api/v1/bots/');
+                const botsData = await botsRes.json();
+                const bots = botsData.success ? botsData.data : botsData;
                 renderBots(bots);
 
                 // Fetch Executions
-                const execsRes = await fetch('/api/executions/');
-                const execs = await execsRes.json();
+                const execsRes = await fetch('/api/v1/executions/');
+                const execsData = await execsRes.json();
+                const execs = execsData.success ? execsData.data : execsData;
                 renderExecutions(execs);
             } catch (e) {
                 console.error("Telemetry Link Failure:", e);

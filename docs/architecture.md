@@ -27,7 +27,7 @@ Mantis Shrimp Bot Control Center is a Django-based application designed to manag
 - **Theme**: Premium Dark Mode with Neon accents.
 - **Data Flow**:
     1. Page Loads -> Renders Skeleton.
-    2. JS `fetch()` calls `/api/bots/` and `/api/executions/`.
+    2. JS `fetch()` calls `/api/v1/bots/` and `/api/v1/executions/`.
     3. DOM updated with new state.
     4. Repeat every 2 seconds.
 
