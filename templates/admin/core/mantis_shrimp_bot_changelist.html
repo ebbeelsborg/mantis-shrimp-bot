@@ -1,0 +1,50 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block content %}
+<h1>{{ title }}</h1>
+<form method="post">
+    {% csrf_token %}
+    <p>
+        <select name="action" required>
+            <option value="">---------</option>
+            <option value="shutdown_bots">Shut down selected bots (Direct)</option>
+            <option value="reheat_bots">Reheat selected bots (+100C) [Async]</option>
+        </select>
+        <input type="submit" value="Go" name="index">
+    </p>
+    <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+            <tr>
+                <th style="width: 24px;"><input type="checkbox" id="select-all"></th>
+                <th style="text-align: left; padding: 8px; border-bottom: 1px solid #ddd;">Name</th>
+                <th style="text-align: left; padding: 8px; border-bottom: 1px solid #ddd;">Core Temp</th>
+                <th style="text-align: left; padding: 8px; border-bottom: 1px solid #ddd;">Status</th>
+                <th style="text-align: left; padding: 8px; border-bottom: 1px solid #ddd;">Organization</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for bot in bots %}
+            <tr>
+                <td style="padding: 8px; border-bottom: 1px solid #eee;">
+                    <input type="checkbox" name="_selected_action" value="{{ bot.id }}">
+                </td>
+                <td style="padding: 8px; border-bottom: 1px solid #eee;">{{ bot.name }}</td>
+                <td style="padding: 8px; border-bottom: 1px solid #eee;">
+                    <span style="color: {% if bot.temperature > 800 %}red{% elif bot.temperature > 500 %}orange{% else %}blue{% endif %}; font-weight: bold;">{{ bot.temperature }}°C</span>
+                </td>
+                <td style="padding: 8px; border-bottom: 1px solid #eee;">{{ bot.status }}</td>
+                <td style="padding: 8px; border-bottom: 1px solid #eee;">{{ bot.organization.name }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" style="padding: 16px;">No bots yet. Run <code>python manage.py seed_data</code>.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</form>
+<script>
+document.getElementById('select-all')?.addEventListener('change', function() {
+    document.querySelectorAll('input[name="_selected_action"]').forEach(cb => cb.checked = this.checked);
+});
+</script>
+{% endblock %}

@@ -1,0 +1,36 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block extrastyle %}{{ block.super }}<link rel="stylesheet" href="{% static "admin/css/dashboard.css" %}">{% endblock %}
+
+{% block coltype %}colMS{% endblock %}
+
+{% block bodyclass %}{{ block.super }} dashboard{% endblock %}
+
+{% block content %}
+<div id="content-main">
+  <div class="app-core module">
+    <table>
+      <caption>
+        <a href="#" class="section">Core (MongoDB)</a>
+      </caption>
+      <tr class="model-organization">
+        <th scope="row"><a href="{% url 'admin:organization_changelist' %}">Organizations</a></th>
+        <td></td>
+        <td><a href="{% url 'admin:organization_changelist' %}" class="changelink">Change</a></td>
+      </tr>
+      <tr class="model-mantis-shrimp-bot">
+        <th scope="row"><a href="{% url 'admin:mantis_shrimp_bot_changelist' %}">Mantis Shrimp Bots</a></th>
+        <td></td>
+        <td><a href="{% url 'admin:mantis_shrimp_bot_changelist' %}" class="changelink">Change</a></td>
+      </tr>
+      <tr class="model-execution">
+        <th scope="row"><a href="{% url 'admin:execution_changelist' %}">Executions</a></th>
+        <td></td>
+        <td><a href="{% url 'admin:execution_changelist' %}" class="changelink">Change</a></td>
+      </tr>
+    </table>
+  </div>
+  {% include "admin/app_list.html" with app_list=app_list show_changelinks=True %}
+</div>
+{% endblock %}

@@ -1,0 +1,30 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block content %}
+<h1>{{ title }}</h1>
+<table style="width: 100%; border-collapse: collapse;">
+    <thead>
+        <tr>
+            <th style="text-align: left; padding: 8px; border-bottom: 1px solid #ddd;">Task</th>
+            <th style="text-align: left; padding: 8px; border-bottom: 1px solid #ddd;">Bot</th>
+            <th style="text-align: left; padding: 8px; border-bottom: 1px solid #ddd;">Started</th>
+            <th style="text-align: left; padding: 8px; border-bottom: 1px solid #ddd;">Success</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for exec in executions %}
+        <tr>
+            <td style="padding: 8px; border-bottom: 1px solid #eee;">{{ exec.task_name }}</td>
+            <td style="padding: 8px; border-bottom: 1px solid #eee;">{{ exec.bot.name }}</td>
+            <td style="padding: 8px; border-bottom: 1px solid #eee;">{{ exec.started_at|date:"Y-m-d H:i:s" }}</td>
+            <td style="padding: 8px; border-bottom: 1px solid #eee;">
+                <span style="color: {% if exec.success %}green{% else %}red{% endif %};">{{ exec.success|yesno:"Yes,No" }}</span>
+            </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="4" style="padding: 16px;">No executions yet.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

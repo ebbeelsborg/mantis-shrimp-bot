@@ -1,38 +1,63 @@
+"""
+Custom admin for MongoEngine documents.
+Uses Django admin styling and login.
+"""
+from bson import ObjectId
 from django.contrib import admin
-from django.utils.html import format_html
-from .models import Organization, MoltenBot, Execution
+from django.contrib.admin.views.decorators import staff_member_required
+from django.shortcuts import render, redirect
+from django.urls import path, reverse
+from django.contrib import messages
+
+from .models import Organization, MantisShrimpBot, Execution
 from .tasks import reheat_bots_task
 
-@admin.register(Organization)
-class OrganizationAdmin(admin.ModelAdmin):
-    list_display = ('name', 'created_at')
 
-@admin.action(description='Shut down selected bots (Direct)')
-def shutdown_bots(modeladmin, request, queryset):
-    queryset.update(status='OFFLINE')
+@staff_member_required
+def organization_changelist(request):
+    orgs = Organization.objects.all()
+    return render(
+        request,
+        "admin/core/organization_changelist.html",
+        {"organizations": orgs, "title": "Organizations"},
+    )
 
-@admin.action(description='Reheat selected bots (+100C) [Async]')
-def reheat_bots(modeladmin, request, queryset):
-    # Pass IDs to Celery, not objects
-    bot_ids = list(queryset.values_list('id', flat=True))
-    reheat_bots_task.delay(bot_ids)
-    modeladmin.message_user(request, f"Started background job to reheat {len(bot_ids)} bots.")
 
-@admin.register(MoltenBot)
-class MoltenBotAdmin(admin.ModelAdmin):
-    list_display = ('name', 'colored_temperature', 'status', 'organization')
-    list_filter = ('status', 'organization')
-    actions = [shutdown_bots, reheat_bots]
+@staff_member_required
+def mantis_shrimp_bot_changelist(request):
+    bots = MantisShrimpBot.objects.all()
+    if request.method == "POST":
+        action = request.POST.get("action")
+        selected = request.POST.getlist("_selected_action")
+        if action == "shutdown_bots" and selected:
+            ids = [ObjectId(oid) for oid in selected]
+            MantisShrimpBot.objects(id__in=ids).update(set__status="OFFLINE")
+            messages.success(request, f"Shut down {len(selected)} bot(s).")
+            return redirect("admin:mantis_shrimp_bot_changelist")
+        if action == "reheat_bots" and selected:
+            reheat_bots_task.delay(selected)
+            messages.success(request, f"Started background job to reheat {len(selected)} bot(s).")
+            return redirect("admin:mantis_shrimp_bot_changelist")
+    return render(
+        request,
+        "admin/core/mantis_shrimp_bot_changelist.html",
+        {"bots": bots, "title": "Mantis Shrimp Bots"},
+    )
 
-    def colored_temperature(self, obj):
-        color = 'blue'
-        if obj.temperature > 500:
-            color = 'orange'
-        if obj.temperature > 800:
-            color = 'red'
-        return format_html('<span style="color: {}; font-weight: bold;">{}°C</span>', color, obj.temperature)
-    colored_temperature.short_description = 'Core Temp'
 
-@admin.register(Execution)
-class ExecutionAdmin(admin.ModelAdmin):
-    list_display = ('task_name', 'bot', 'started_at', 'success')
+@staff_member_required
+def execution_changelist(request):
+    executions = Execution.objects.all()[:200]
+    return render(
+        request,
+        "admin/core/execution_changelist.html",
+        {"executions": executions, "title": "Executions"},
+    )
+
+
+def get_admin_urls():
+    return [
+        path("core/organization/", organization_changelist, name="organization_changelist"),
+        path("core/mantis_shrimp_bot/", mantis_shrimp_bot_changelist, name="mantis_shrimp_bot_changelist"),
+        path("core/execution/", execution_changelist, name="execution_changelist"),
+    ]

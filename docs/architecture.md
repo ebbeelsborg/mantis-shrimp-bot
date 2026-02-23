@@ -1,24 +1,26 @@
-# Moltenbot Architecture
+# Mantis Shrimp Bot Architecture
 
 ## Overview
-Moltenbot Control Center is a Django-based application designed to manage a fleet of high-temperature AI agents. It follows a **Polling Architecture** where the frontend periodically fetches the state of the world from a REST API.
+Mantis Shrimp Bot Control Center is a Django-based application designed to manage a fleet of high-temperature AI agents. It follows a **Polling Architecture** where the frontend periodically fetches the state of the world from a REST API. Celery Beat drives a live task feed: every 3 seconds a new task is created and a random online bot picks it up and completes it (with random success or failure).
 
 ## System Components
 
 ### 1. Docker Infrastructure
 - **Web Container**: Python 3.11 + Django (Gunicorn/Development Server).
 - **Worker Container**: Celery Worker for background tasks.
+- **Beat Container**: Celery Beat scheduler for periodic tasks (e.g., auto-create tasks every 3 seconds).
 - **Cache/Broker**: Redis 7.
-- **DB Container**: PostgreSQL 15.
+- **DB Container**: MongoDB 7 (NoSQL, used via MongoEngine).
 
 ### 2. Backend (Django)
-- **Core App**:
-    - `MoltenBot`: The primary domain entity.
+- **Core App** (MongoEngine / NoSQL):
+    - `MantisShrimpBot`: The primary domain entity (MongoDB document).
     - `Organization`: Multi-tenancy grouping.
     - `Execution`: Immutable log of work done by bots.
-    - **Tasks**: Celery tasks for heavy lifting (e.g., mass updates).
+    - **Tasks**: Celery tasks for heavy lifting (e.g., mass updates, `create_and_process_task` every 3 seconds).
 - **API**: Django Rest Framework (DRF) provides JSON endpoints at `/api/`.
-- **Admin**: Heavily customized for "Ops" work (shutdown/reheat actions).
+- **Admin**: Custom admin for MongoEngine documents (shutdown/reheat actions).
+- **Management Commands**: `seed_data` pre-seeds organizations, bots, and executions.
 
 ### 3. Frontend (Dashboard)
 - **Stack**: Django Templates + Vanilla JS + CSS3.
@@ -27,7 +29,6 @@ Moltenbot Control Center is a Django-based application designed to manage a flee
     1. Page Loads -> Renders Skeleton.
     2. JS `fetch()` calls `/api/bots/` and `/api/executions/`.
     3. DOM updated with new state.
-3. DOM updated with new state.
     4. Repeat every 2 seconds.
 
 ## System Architecture
@@ -35,36 +36,23 @@ Moltenbot Control Center is a Django-based application designed to manage a flee
 ```mermaid
 graph TD
     User[User Browser] -->|HTTP| Web[Django Web]
-    Web -->|Read/Write| DB[(PostgreSQL)]
+    Web -->|Auth/Sessions| SQLite[(SQLite)]
+    Web -->|Read/Write| MongoDB[(MongoDB)]
     Web -->|Enqueue Task| Redis[(Redis Broker)]
+    Beat[Celery Beat] -->|Schedule create_and_process_task every 3s| Redis
     Worker[Celery Worker] -->|Pop Task| Redis
-    Worker -->|Update| DB
+    Worker -->|Update| MongoDB
 ```
 
-## Database Schema (Simplified)
+## Database Schema (MongoDB / NoSQL)
 
-```mermaid
-erDiagram
-    ORGANIZATION ||--|{ MOLTENBOT : owns
-    MOLTENBOT ||--|{ EXECUTION : performs
+Collections and document structure (MongoEngine):
 
-    ORGANIZATION {
-        string name
-    }
+- **organizations**: `{ name, created_at }`
+- **mantis_shrimp_bots**: `{ name, organization (ref), model_version, temperature, status, formatted_status }`
+- **executions**: `{ bot (ref), task_name, started_at, completed_at, success }`
 
-    MOLTENBOT {
-        string name
-        float temperature
-        enum status
-        string model_version
-    }
-
-    EXECUTION {
-        string task_name
-        datetime started_at
-        bool success
-    }
-```
+References use MongoDB ObjectIds. Django auth/sessions use SQLite.
 
 ## Security Considerations
 - **Secrets**: Managed via `.env` (passed to Docker).

@@ -64,10 +64,14 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
-# Database
+# Database - SQLite for Django auth, sessions, admin
 DATABASES = {
-    'default': env.db("DATABASE_URL", default="sqlite:///db.sqlite3")
+    "default": env.db("DATABASE_URL", default="sqlite:///db.sqlite3")
 }
+
+# MongoDB - used by MongoEngine for app data (Organization, MantisShrimpBot, Execution)
+MONGODB_NAME = env("MONGODB_NAME", default="mantis_shrimp_bot_db")
+MONGODB_HOST = env("MONGODB_HOST", default="mongodb://mongo:27017/")
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
