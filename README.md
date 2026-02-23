@@ -4,6 +4,8 @@
 
 Mantis Shrimp Bot Control Center is a premium dashboard for monitoring and controlling Mantis Shrimp Bot AI agents. It features real-time telemetry, a sleek dark-mode UI, and powerful administrative tools.
 
+![Dashboard](docs/dashboard.png)
+
 ## Features
 - **Real-time Telemetry**: Monitor core temperatures and status.
 - **Premium UI**: Dark mode with dynamic color-coding.
